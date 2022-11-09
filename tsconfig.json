@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+      "module": "commonjs",
+      "target": "esnext",
+      "pretty": true,
+      "noImplicitAny": false,
+      // These settings are required for TypeScript project references
+      "declaration": true,
+      "declarationMap": true,
+      "sourceMap": true,
+      "resolveJsonModule": true,
+      "esModuleInterop": true,
+      "moduleResolution": "node",
+      "allowJs": true,
+      "skipLibCheck": true,
+      "allowSyntheticDefaultImports": true,
+      "strict": true,
+      "forceConsistentCasingInFileNames": true,
+      "isolatedModules": true,
+      "types": ["@nomiclabs/hardhat-ethers", "@nomiclabs/hardhat-waffle"],
+      "strictNullChecks": false
+  },
+  "angularCompilerOptions": {
+      "strictNullChecks": false
+  },
+  "exclude": ["dist", "node_modules"],
+  "include": ["./test", "./src", "./scripts"],
+  "files": ["./hardhat.config.ts"]
+}
