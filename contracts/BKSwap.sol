@@ -26,7 +26,7 @@ contract BKSwap is BKCommon {
         emit ManagerCaller(msg.sender, _caller, _isCaller);
     }
 
-    fallback() external payable whenNotPaused {
+    fallback() external payable whenNotPaused nonReentrant {
         if(!isCaller[msg.sender]) {
             revert InvalidCaller();
         }
@@ -48,7 +48,5 @@ contract BKSwap is BKCommon {
         if (!success) {
             _revertWithData(resultData);
         }
-
-        _returnWithData(resultData);
     }
 }

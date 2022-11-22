@@ -65,11 +65,5 @@ contract BKCommon is IBKErrors, Ownable, Pausable, ReentrancyGuard {
         assembly { revert(add(data, 32), mload(data)) }
     }
 
-    /// @dev Return with arbitrary bytes.
-    /// @param data Return data.
-    function _returnWithData(bytes memory data) internal pure {
-        assembly { return(add(data, 32), mload(data)) }
-    }
-
     receive() external payable {}
 }
