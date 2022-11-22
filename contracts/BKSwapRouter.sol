@@ -8,19 +8,16 @@ import { IBKErrors } from "./interfaces/IBKErrors.sol";
 
 contract BKSwapRouter is BKCommon {
 
+    address public immutable BKSWAP_V2;
+
     struct SwapParams {
-        address bkSwap;
         address fromTokenAddress;
         uint256 amountInTotal;
         bytes data;
     }
-    mapping(address => bool) public isBKSwap;
 
-    event ManageBKSwap(address operator, address bkswap, bool opened);
-
-    function manageBKSwap(address _bkSwap, bool _open) external onlyOwner {
-        isBKSwap[_bkSwap] = _open;
-        emit ManageBKSwap(msg.sender, _bkSwap, _open);
+    constructor(address bkswapAddress) {
+        BKSWAP_V2 = bkswapAddress;
     }
 
     function swap(SwapParams calldata swapParams)
@@ -29,15 +26,11 @@ contract BKSwapRouter is BKCommon {
         whenNotPaused
         nonReentrant
     {
-        if(!isBKSwap[swapParams.bkSwap]) {
-            revert InvalidSwapAddress(swapParams.bkSwap);
-        }
-
         if (!TransferHelper.isETH(swapParams.fromTokenAddress)) {
             TransferHelper.safeTransferFrom(
                 swapParams.fromTokenAddress,
                 msg.sender,
-                swapParams.bkSwap,
+                BKSWAP_V2,
                 swapParams.amountInTotal
             );
         } else {
@@ -46,7 +39,7 @@ contract BKSwapRouter is BKCommon {
             }
         }
 
-        (bool success, bytes memory resultData) = swapParams.bkSwap.call{
+        (bool success, bytes memory resultData) = BKSWAP_V2.call{
             value: msg.value
         }(swapParams.data);
 
