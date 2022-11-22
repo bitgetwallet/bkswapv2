@@ -25,13 +25,23 @@ contract BKFees is BKCommon {
     constructor (
         address _signer,
         address payable _feeTo,
-        address payable _altcoinsFeeToTo,
+        address payable _altcoinsFeeTo,
         uint _feeRate
     ) {
+        if (_signer == address(0) || _feeTo == address(0) || _altcoinsFeeTo == address(0)) {
+            revert InvalidZeroAddress();
+        }
+
+        if (_feeRate < 10 || _feeRate > 50) {
+            revert InvalidFeeRate(_feeRate);
+        }
+
         signer = _signer;
         feeTo = _feeTo;
-        altcoinsFeeTo = _altcoinsFeeToTo;
+        altcoinsFeeTo = _altcoinsFeeTo;
         feeRate = _feeRate;
+        
+        emit SetFeeTo(msg.sender, _feeTo, _altcoinsFeeTo, _feeRate);
     }
 
     function setFeeTo (
@@ -39,6 +49,15 @@ contract BKFees is BKCommon {
         address payable _altcoinsFeeTo,
         uint _feeRate
     )  external onlyOwner whenNotPaused {
+
+        if ( _feeTo == address(0) || _altcoinsFeeTo == address(0)) {
+            revert InvalidZeroAddress();
+        }
+
+        if (_feeRate < 10 || _feeRate > 50) {
+            revert InvalidFeeRate(_feeRate);
+        }
+       
         feeTo = _feeTo;
         altcoinsFeeTo = _altcoinsFeeTo;
         feeRate = _feeRate;
@@ -57,6 +76,9 @@ contract BKFees is BKCommon {
     }
 
     function setSigner(address _signer) external onlyOwner whenNotPaused {
+        if ( _signer == address(0)) {
+            revert InvalidZeroAddress();
+        }
         signer = _signer;
 
         emit SetSigner(msg.sender, _signer);

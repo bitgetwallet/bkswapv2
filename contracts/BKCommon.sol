@@ -4,9 +4,10 @@ pragma solidity ^0.8.17;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/IBKErrors.sol";
 
-contract BKCommon is IBKErrors, Ownable, Pausable {
+contract BKCommon is IBKErrors, Ownable, Pausable, ReentrancyGuard {
     
     using SafeERC20 for IERC20;
 
@@ -56,6 +57,18 @@ contract BKCommon is IBKErrors, Ownable, Pausable {
         }
         require(callStatus, "_transferEth: Eth transfer failed");
         emit RescueETH(_to, _amount);
+    }
+
+    /// @dev Revert with arbitrary bytes.
+    /// @param data Revert data.
+    function _revertWithData(bytes memory data) internal pure {
+        assembly { revert(add(data, 32), mload(data)) }
+    }
+
+    /// @dev Return with arbitrary bytes.
+    /// @param data Return data.
+    function _returnWithData(bytes memory data) internal pure {
+        assembly { return(add(data, 32), mload(data)) }
     }
 
     receive() external payable {}

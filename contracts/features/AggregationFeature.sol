@@ -20,8 +20,8 @@ library AggregationFeature {
     string public constant FEATURE_NAME = "BitKeep SOR: Aggregation Feature";
     string public constant FEATURE_VERSION = "1.0";
 
-    address public constant BK_FEES = 0xe983bD475E9f5D55CBac3DC7ad6e537ccABf846a;
-    address public constant BK_REGISTRY = 0x741646e7Af4ba0087511e439B5238D61f7BC6a8D;
+    address public constant BK_FEES = 0x76b9a40Fb2844A450C086B06A4D20599C16FF6eA;
+    address public constant BK_REGISTRY = 0x65330BE301b4f2d72c533A040a68eAfeDfA7c2fa;
 
     bytes4 public constant FUNC_SWAP = bytes4(keccak256(bytes("swap(AggregationFeature.SwapDetail)"))); // 0x6a2b69f0
    
@@ -89,13 +89,6 @@ library AggregationFeature {
                 revert IBKErrors.SwapEthBalanceNotEnough();
             }
         } else {
-            TransferHelper.safeTransferFrom(
-                swapDetail.basicParams.fromTokenAddress,
-                msg.sender,
-                address(this),
-                swapDetail.basicParams.amountInTotal
-            );
-
             TransferHelper.approveMax(
                 fromToken,
                 swapDetail.aggregationParams.approveTarget,
@@ -181,13 +174,6 @@ library AggregationFeature {
 
     function _swapToken2Others(SwapDetail calldata swapDetail, address feeTo, address altcoinFeeTo, uint feeRate) internal {
         IERC20 fromToken = IERC20(swapDetail.basicParams.fromTokenAddress);
-
-        TransferHelper.safeTransferFrom(
-            swapDetail.basicParams.fromTokenAddress,
-            msg.sender,
-            address(this),
-            swapDetail.basicParams.amountInTotal
-        );
 
         uint balanceOfThis = fromToken.balanceOf(address(this));
 

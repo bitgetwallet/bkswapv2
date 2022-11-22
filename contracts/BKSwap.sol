@@ -5,22 +5,41 @@ import "./BKCommon.sol";
 import "./interfaces/IBKRegistry.sol";
 
 contract BKSwap is BKCommon {
-    address bkRegistry;
+    address public bkRegistry;
+    mapping(address => bool) public isCaller;
+
+    event ManagerCaller(address operator, address caller, bool isCaller);
+    event SetRegistry(address operator, address bkRegistry);
 
     constructor(address _bkRegistry) {
         bkRegistry = _bkRegistry;
+        emit SetRegistry(msg.sender, _bkRegistry);
     }
     
-    function setBKRegistryAddress(address _bkRegistry) external onlyOwner {
+    function setRegistry(address _bkRegistry) external whenNotPaused onlyOwner {
         bkRegistry = _bkRegistry;
+        emit SetRegistry(msg.sender, _bkRegistry);
     }
-    
+
+    function managerCaller(address _caller, bool _isCaller) external onlyOwner {
+        isCaller[_caller] = _isCaller;
+        emit ManagerCaller(msg.sender, _caller, _isCaller);
+    }
+
     fallback() external payable whenNotPaused {
-        if(msg.sig.length != 4) { revert InvalidMsgSig(); }
+        if(!isCaller[msg.sender]) {
+            revert InvalidCaller();
+        }
+
+        if (msg.sig.length != 4) {
+            revert InvalidMsgSig();
+        }
 
         (address proxy, bool isLib) = IBKRegistry(bkRegistry).getFeature(msg.sig);
-        
-        if (proxy == address(0)) { revert FeatureNotExist(msg.sig); }
+
+        if (proxy == address(0)) {
+            revert FeatureNotExist(msg.sig);
+        }
 
         (bool success, bytes memory resultData) = isLib
             ? proxy.delegatecall(msg.data)
@@ -31,17 +50,5 @@ contract BKSwap is BKCommon {
         }
 
         _returnWithData(resultData);
-    }
-
-    /// @dev Revert with arbitrary bytes.
-    /// @param data Revert data.
-    function _revertWithData(bytes memory data) private pure {
-        assembly { revert(add(data, 32), mload(data)) }
-    }
-
-    /// @dev Return with arbitrary bytes.
-    /// @param data Return data.
-    function _returnWithData(bytes memory data) private pure {
-        assembly { return(add(data, 32), mload(data)) }
     }
 }

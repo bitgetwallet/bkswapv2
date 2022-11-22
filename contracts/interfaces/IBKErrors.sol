@@ -6,8 +6,11 @@ interface IBKErrors {
     error InsufficientEtherSupplied();
     error FeatureNotExist(bytes4 msgSig);
     error FeatureInActive();
+    error InvalidCaller();
     error InvalidSigner();
     error InvalidNonce(bytes32 signMsg);
+    error InvalidZeroAddress();  
+    error InvalidFeeRate(uint256 feeRate);
     error SwapEthBalanceNotEnough();
     error SwapTokenBalanceNotEnough();
     error SwapTokenApproveNotEnough();
@@ -15,5 +18,6 @@ interface IBKErrors {
     error SwapTypeNotAvailable();
     error BurnToMuch();
     error IllegalCallTarget();
-    error IllegalApproveTarget();  
+    error IllegalApproveTarget(); 
+    error InvalidSwapAddress(address);
 }
