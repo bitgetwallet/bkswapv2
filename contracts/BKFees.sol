@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -77,6 +77,7 @@ contract BKFees is BKCommon {
     }
 
     function setSigner(address _signer) external onlyOwner whenNotPaused {
+        
         if ( _signer == address(0)) {
             revert InvalidZeroAddress();
         }

@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.17;
 
 import "../interfaces/IBKFees.sol";
@@ -20,8 +20,8 @@ library AggregationFeature {
     string public constant FEATURE_NAME = "BitKeep SOR: Aggregation Feature";
     string public constant FEATURE_VERSION = "1.0";
 
-    address public constant BK_FEES = 0x8967711D157561656b236F36dB5F448bD63F7029;
-    address public constant BK_REGISTRY = 0xecBE127c42488367753BDe497A3d07f66Cb36EB6;
+    address public constant BK_FEES = 0xE4DA6f981a78b8b9edEfE4D7a955C04bA7e67D8D;
+    address public constant BK_REGISTRY = 0x9aFD2948F573DD8684347924eBcE1847D50621eD;
 
     bytes4 public constant FUNC_SWAP = bytes4(keccak256(bytes("swap(AggregationFeature.SwapDetail)"))); // 0x6a2b69f0
    
