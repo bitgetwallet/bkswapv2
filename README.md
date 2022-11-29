@@ -19,8 +19,6 @@ The protocol is deployed by CREATE2 Factory with the same address on each EVM. T
 
 [0xD1ca1F4dBB645710f5D5a9917AA984a47524f49A](https://bscscan.com/address/0xd1ca1f4dbb645710f5d5a9917aa984a47524f49a#code)
 
-</td><td rowspan="14">
-
 <tr><td>BNB Chain</td></tr>
 <tr><td>Polygon</td></tr>
 <tr><td>Optimism</td></tr>
