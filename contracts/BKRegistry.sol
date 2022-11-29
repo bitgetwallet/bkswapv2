@@ -18,6 +18,10 @@ contract BKRegistry is BKCommon {
     event SetCallTarget(address operator, bytes4 methodId, address target, bool isEnable);
     event SetApproveTarget(address operator, bytes4 methodId, address target, bool isEnable);
 
+    constructor(address _owner) {
+        _transferOwnership(_owner);
+    }
+
     function setFeature(
         bytes4 _methodId,
         address _proxy,
@@ -40,22 +44,22 @@ contract BKRegistry is BKCommon {
         view
         returns (address proxy, bool isLib) {
         Feature memory feat = features[_methodId];
-        if (!feat.isActive) {
-            revert FeatureInActive();
-        }
+
+        _checkFeatureStatus(feat);
+
         proxy = feat.proxy;
         isLib = feat.isLib;
     }
 
     function setCallTarget(
         bytes4 _methodId,
-        address [] memory _targets,
+        address [] calldata _targets,
         bool _isEnable
     ) external onlyOwner whenNotPaused {
         Feature memory feat = features[_methodId];
-        if (feat.proxy == address(0)) {
-            revert FeatureNotExist(_methodId);
-        }
+
+        _checkFeatureStatus(feat);
+
         for (uint256 i = 0; i < _targets.length; i++) {
             isCallTargets[_methodId][_targets[i]] = _isEnable;
             emit SetCallTarget(msg.sender, _methodId, _targets[i], _isEnable);
@@ -67,21 +71,20 @@ contract BKRegistry is BKCommon {
         view
         returns (bool) {
         Feature memory feat = features[_methodId];
-        if (!feat.isActive) {
-            revert FeatureInActive();
-        }
+
+        _checkFeatureStatus(feat);
+
         return isCallTargets[_methodId][_target];
     }
 
     function setApproveTarget(
         bytes4 _methodId,
-        address [] memory _targets,
+        address [] calldata _targets,
         bool _isEnable
     ) external onlyOwner whenNotPaused {
         Feature memory feat = features[_methodId];
-        if (feat.proxy == address(0)) {
-            revert FeatureNotExist(_methodId);
-        }
+
+        _checkFeatureStatus(feat);
 
         for (uint256 i = 0; i < _targets.length; i++) {
             isApproveTargets[_methodId][_targets[i]] = _isEnable;
@@ -94,9 +97,19 @@ contract BKRegistry is BKCommon {
         view
         returns (bool) {
         Feature memory feat = features[_methodId];
-        if (!feat.isActive) {
+
+        _checkFeatureStatus(feat);
+
+        return isApproveTargets[_methodId][_target];
+    }
+
+    function _checkFeatureStatus(Feature memory _feat) internal pure {
+        if (_feat.proxy == address(0)) {
+            revert FeatureNotExist();
+        }
+
+        if (!_feat.isActive) {
             revert FeatureInActive();
         }
-        return isApproveTargets[_methodId][_target];
     }
 }

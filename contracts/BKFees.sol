@@ -26,7 +26,8 @@ contract BKFees is BKCommon {
         address _signer,
         address payable _feeTo,
         address payable _altcoinsFeeTo,
-        uint _feeRate
+        uint _feeRate,
+        address _owner
     ) {
         if (_signer == address(0) || _feeTo == address(0) || _altcoinsFeeTo == address(0)) {
             revert InvalidZeroAddress();
@@ -40,8 +41,8 @@ contract BKFees is BKCommon {
         feeTo = _feeTo;
         altcoinsFeeTo = _altcoinsFeeTo;
         feeRate = _feeRate;
-        
         emit SetFeeTo(msg.sender, _feeTo, _altcoinsFeeTo, _feeRate);
+        _transferOwnership(_owner);
     }
 
     function setFeeTo (
@@ -49,7 +50,7 @@ contract BKFees is BKCommon {
         address payable _altcoinsFeeTo,
         uint _feeRate
     )  external onlyOwner whenNotPaused {
-
+       
         if ( _feeTo == address(0) || _altcoinsFeeTo == address(0)) {
             revert InvalidZeroAddress();
         }

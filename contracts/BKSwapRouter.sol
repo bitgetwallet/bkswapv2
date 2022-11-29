@@ -3,11 +3,10 @@ pragma solidity ^0.8.17;
 
 import "./BKCommon.sol";
 import "./utils/TransferHelper.sol";
-import { BasicParams, AggregationParams, SwapType, OrderInfo } from "./interfaces/IBKStructsAndEnums.sol";
-import { IBKErrors } from "./interfaces/IBKErrors.sol";
+import {BasicParams, AggregationParams, SwapType, OrderInfo} from "./interfaces/IBKStructsAndEnums.sol";
+import {IBKErrors} from "./interfaces/IBKErrors.sol";
 
 contract BKSwapRouter is BKCommon {
-
     address public immutable BKSWAP_V2;
 
     struct SwapParams {
@@ -16,8 +15,9 @@ contract BKSwapRouter is BKCommon {
         bytes data;
     }
 
-    constructor(address bkswapAddress) {
-        BKSWAP_V2 = bkswapAddress;
+    constructor(address bkSwapAddress, address owner) {
+        BKSWAP_V2 = bkSwapAddress;
+        _transferOwnership(owner);
     }
 
     function swap(SwapParams calldata swapParams)

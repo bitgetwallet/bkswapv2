@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 interface IBKErrors {
     error InvalidMsgSig();
     error InsufficientEtherSupplied();
-    error FeatureNotExist(bytes4 msgSig);
+    error FeatureNotExist();
     error FeatureInActive();
     error InvalidCaller();
     error InvalidSigner();
@@ -20,4 +20,5 @@ interface IBKErrors {
     error IllegalCallTarget();
     error IllegalApproveTarget(); 
     error InvalidSwapAddress(address);
+    error CallException(address);
 }

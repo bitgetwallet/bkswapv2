@@ -20,8 +20,8 @@ library AggregationFeature {
     string public constant FEATURE_NAME = "BitKeep SOR: Aggregation Feature";
     string public constant FEATURE_VERSION = "1.0";
 
-    address public constant BK_FEES = 0x76b9a40Fb2844A450C086B06A4D20599C16FF6eA;
-    address public constant BK_REGISTRY = 0x65330BE301b4f2d72c533A040a68eAfeDfA7c2fa;
+    address public constant BK_FEES = 0x8967711D157561656b236F36dB5F448bD63F7029;
+    address public constant BK_REGISTRY = 0xecBE127c42488367753BDe497A3d07f66Cb36EB6;
 
     bytes4 public constant FUNC_SWAP = bytes4(keccak256(bytes("swap(AggregationFeature.SwapDetail)"))); // 0x6a2b69f0
    
@@ -58,7 +58,7 @@ library AggregationFeature {
             revert IBKErrors.IllegalApproveTarget();
         }
 
-        (address feeTo, address altcoinFeeTo, uint feeRate) = IBKFees(BK_FEES).getFeeTo();
+       (address feeTo, address altcoinFeeTo, uint feeRate) = IBKFees(BK_FEES).getFeeTo();
 
         if(swapDetail.basicParams.swapType > SwapType.WHITE_TO_TOKEN) {
             revert IBKErrors.SwapTypeNotAvailable();
@@ -84,11 +84,19 @@ library AggregationFeature {
 
         IERC20 fromToken = IERC20(swapDetail.basicParams.fromTokenAddress);
 
+        bool toTokenIsETH = TransferHelper.isETH(swapDetail.basicParams.toTokenAddress);
+
         if(TransferHelper.isETH(swapDetail.basicParams.fromTokenAddress)) {
             if(msg.value < swapDetail.basicParams.amountInForSwap) {
                 revert IBKErrors.SwapEthBalanceNotEnough();
             }
         } else {
+            uint fromBalanceOfThis = fromToken.balanceOf(address(this));
+
+            if(fromBalanceOfThis < swapDetail.basicParams.amountInTotal) {
+                revert IBKErrors.BurnToMuch();
+            }
+
             TransferHelper.approveMax(
                 fromToken,
                 swapDetail.aggregationParams.approveTarget,
@@ -97,17 +105,17 @@ library AggregationFeature {
         }
 
         uint balanceOfThis = 
-            TransferHelper.isETH(swapDetail.basicParams.toTokenAddress) ?
+            toTokenIsETH ?
             address(this).balance : IERC20(swapDetail.basicParams.toTokenAddress).balanceOf(address(this));
 
         (bool success, ) = swapDetail.aggregationParams.callTarget.call{value: msg.value}(swapDetail.aggregationParams.data);
         _checkCallResult(success);
 
         uint balanceNow = 
-            TransferHelper.isETH(swapDetail.basicParams.toTokenAddress) ?
+            toTokenIsETH ?
             address(this).balance : IERC20(swapDetail.basicParams.toTokenAddress).balanceOf(address(this));
 
-        if(TransferHelper.isETH(swapDetail.basicParams.toTokenAddress)) {
+        if(toTokenIsETH) {
             TransferHelper.safeTransferETH(swapDetail.basicParams.receiver, balanceNow - balanceOfThis);
         } else {
             TransferHelper.safeTransfer(swapDetail.basicParams.toTokenAddress, swapDetail.basicParams.receiver, balanceNow - balanceOfThis);
@@ -140,7 +148,6 @@ library AggregationFeature {
         uint feeAmount = swapDetail.basicParams.amountInTotal * _feeRate / 1e4;
         TransferHelper.safeTransferETH(_feeTo, feeAmount);
 
-        // swap
         (bool success, ) = swapDetail.aggregationParams.callTarget.call{value: swapDetail.basicParams.amountInForSwap}(swapDetail.aggregationParams.data);
 
         _checkCallResult(success);
@@ -181,7 +188,6 @@ library AggregationFeature {
             revert IBKErrors.BurnToMuch();
         }
 
-        // approve给approvetarget
         TransferHelper.approveMax(
             fromToken,
             swapDetail.aggregationParams.approveTarget,

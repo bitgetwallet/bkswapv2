@@ -10,6 +10,4 @@ interface IBKSwapRouter {
     }
 
     function swap(SwapParams calldata swapParams) external;
-    function manageBKSwap(address _bkSwap, bool _open) external;
-    function isBKSwap(address _bkSwap) view external returns(bool);
 }

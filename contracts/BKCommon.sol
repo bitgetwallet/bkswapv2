@@ -22,7 +22,7 @@ contract BKCommon is IBKErrors, Ownable, Pausable, ReentrancyGuard {
         _;
     }
     
-    function setOperator(address[] memory _operators, bool _isOperator) external onlyOwner {
+    function setOperator(address[] calldata _operators, bool _isOperator) external onlyOwner {
         for(uint i = 0; i < _operators.length; i++) {
             isOperator[_operators[i]] = _isOperator;
             emit SetOperator(_operators[i], _isOperator);
@@ -37,15 +37,15 @@ contract BKCommon is IBKErrors, Ownable, Pausable, ReentrancyGuard {
         _unpause();
     }
 
-    function rescueERC20(address asset, address recipient) external onlyOwner {
-        IERC20(asset).transfer(
+    function rescueERC20(address asset, address recipient) external onlyOperator {
+        IERC20(asset).safeTransfer(
             recipient,
             IERC20(asset).balanceOf(address(this))
         );
         emit RescueERC20(asset, recipient);
     }
     
-    function rescueETH(address recipient) external onlyOwner {
+    function rescueETH(address recipient) external onlyOperator {
         _transferEth(recipient, address(this).balance);
     }
 

@@ -11,9 +11,10 @@ contract BKSwap is BKCommon {
     event ManagerCaller(address operator, address caller, bool isCaller);
     event SetRegistry(address operator, address bkRegistry);
 
-    constructor(address _bkRegistry) {
+    constructor(address _bkRegistry, address _owner) {
         bkRegistry = _bkRegistry;
         emit SetRegistry(msg.sender, _bkRegistry);
+        _transferOwnership(_owner);
     }
     
     function setRegistry(address _bkRegistry) external whenNotPaused onlyOwner {
@@ -36,10 +37,6 @@ contract BKSwap is BKCommon {
         }
 
         (address proxy, bool isLib) = IBKRegistry(bkRegistry).getFeature(msg.sig);
-
-        if (proxy == address(0)) {
-            revert FeatureNotExist(msg.sig);
-        }
 
         (bool success, bytes memory resultData) = isLib
             ? proxy.delegatecall(msg.data)
