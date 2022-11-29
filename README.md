@@ -5,7 +5,7 @@ The library contains a smart contract for EVM-based blockchains (Ethereum, BNB C
 
 This contract allows users to carry out token swap and supports order-splitting in large amounts. It aggregates 1inch, dodo, uniswap, 0x and other order-splitting protocols, facilitating users' access to the liquidity of hundreds of Dex. Meanwhile, it provides users with the best swap price and saves gas fees. 
 
-## Deploy 
+## Deployments 
 
 The protocol is deployed by CREATE2 Factory with the same address on each EVM. The address is as follows
 
