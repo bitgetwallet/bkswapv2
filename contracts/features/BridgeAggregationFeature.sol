@@ -6,7 +6,6 @@ import "../interfaces/IBKRegistry.sol";
 import "../utils/TransferHelper.sol";
 
 import {SignParams, AggregationParams} from "../interfaces/IBKStructsAndEnums.sol";
-
 import {IBKErrors} from "../interfaces/IBKErrors.sol";
 
 library BridgeAggregationFeature {
@@ -51,7 +50,7 @@ library BridgeAggregationFeature {
     struct BridgeBasicParams {
         SignParams signParams;
         BridgeType bridgeType;
-        bool feeTokenIsWhite;  
+        bool feeTokenIsWhite;
         address fromTokenAddress;
         address toTokenAddress;
         address fromChainId;
@@ -60,7 +59,7 @@ library BridgeAggregationFeature {
         uint256 amountInForSwap;
         uint256 additionalFee;
         address receiver;
-        uint256 minAmountOut; 
+        uint256 minAmountOut;
     }
 
     struct BridgeDetail {
@@ -91,13 +90,38 @@ library BridgeAggregationFeature {
             revert IBKErrors.SwapTypeNotAvailable();
         }
 
+        bool fromTokenIsETH = TransferHelper.isETH(
+            bridgeDetail.basicParams.fromTokenAddress
+        );
+
+        if (fromTokenIsETH) {
+            if (
+                msg.value <
+                bridgeDetail.basicParams.amountInTotal +
+                    bridgeDetail.basicParams.additionalFee
+            ) {
+                revert IBKErrors.SwapEthBalanceNotEnough();
+            }
+        } else {
+            if (msg.value < bridgeDetail.basicParams.additionalFee) {
+                revert IBKErrors.SwapEthBalanceNotEnough();
+            }
+        }
+
+        IBKFees(BK_FEES).checkIsSigner(
+            keccak256(
+                abi.encodePacked(
+                    bridgeDetail.basicParams.signParams.nonceHash,
+                    bridgeDetail.basicParams.amountInTotal,
+                    bridgeDetail.basicParams.amountInForSwap,
+                    bridgeDetail.basicParams.additionalFee
+                )
+            ),
+            bridgeDetail.basicParams.signParams.signature
+        );
+
         if (bridgeDetail.basicParams.bridgeType == BridgeType.FREE) {
-            IBKFees(BK_FEES).checkIsSigner(
-                bridgeDetail.basicParams.signParams.nonceHash,
-                bridgeDetail.basicParams.signParams.signature
-            );
-            
-            if (TransferHelper.isETH(bridgeDetail.basicParams.fromTokenAddress)) {
+            if (fromTokenIsETH) {
                 _bridgeEth2Others(bridgeDetail, true, payable(address(0)), 0);
             } else {
                 _bridgeToken2Others(bridgeDetail, true, address(0), 0);
@@ -108,9 +132,6 @@ library BridgeAggregationFeature {
             ).getFeeTo();
 
             if (bridgeDetail.basicParams.bridgeType == BridgeType.ETH_OTHERS) {
-                if (msg.value < bridgeDetail.basicParams.amountInTotal) {
-                    revert IBKErrors.SwapEthBalanceNotEnough();
-                }
                 _bridgeEth2Others(bridgeDetail, false, payable(feeTo), feeRate);
             } else {
                 if (bridgeDetail.basicParams.feeTokenIsWhite) {
@@ -134,15 +155,26 @@ library BridgeAggregationFeature {
         uint256 _feeRate
     ) internal {
         uint256 feeAmount;
-        if (!_isFree && _feeTo != address(0) && _feeRate != 0) {
+        if (!_isFree) {
             feeAmount =
-                ((bridgeDetail.basicParams.amountInTotal - bridgeDetail.basicParams.additionalFee) * _feeRate) /
+                ((bridgeDetail.basicParams.amountInTotal -
+                    bridgeDetail.basicParams.additionalFee) * _feeRate) /
                 1e4;
             TransferHelper.safeTransferETH(_feeTo, feeAmount);
         }
 
+        if (
+            bridgeDetail.basicParams.amountInForSwap !=
+            bridgeDetail.basicParams.amountInTotal -
+                bridgeDetail.basicParams.additionalFee -
+                feeAmount
+        ) {
+            revert IBKErrors.SwapEthBalanceNotEnough();
+        }
+
         (bool success, ) = bridgeDetail.aggregationParams.callTarget.call{
-            value: bridgeDetail.basicParams.amountInForSwap + bridgeDetail.basicParams.additionalFee
+            value: bridgeDetail.basicParams.amountInForSwap +
+                bridgeDetail.basicParams.additionalFee
         }(bridgeDetail.aggregationParams.data);
 
         _checkCallResult(success);
@@ -159,8 +191,12 @@ library BridgeAggregationFeature {
         IERC20 fromToken = IERC20(bridgeDetail.basicParams.fromTokenAddress);
 
         uint256 balanceOfThis = fromToken.balanceOf(address(this));
-
-        if (balanceOfThis < bridgeDetail.basicParams.amountInTotal) {
+        uint256 balanceBefore = balanceOfThis -
+            bridgeDetail.basicParams.amountInTotal;
+        if (
+            balanceOfThis - balanceBefore <
+            bridgeDetail.basicParams.amountInTotal
+        ) {
             revert IBKErrors.BurnToMuch();
         }
 
@@ -171,7 +207,7 @@ library BridgeAggregationFeature {
         );
 
         uint256 feeAmount;
-        if (!_isFree && _feeTo != address(0) && _feeRate != 0) {
+        if (!_isFree) {
             feeAmount =
                 (bridgeDetail.basicParams.amountInTotal * _feeRate) /
                 1e4;
@@ -180,6 +216,13 @@ library BridgeAggregationFeature {
                 _feeTo,
                 feeAmount
             );
+        }
+
+        if (
+            bridgeDetail.basicParams.amountInForSwap !=
+            bridgeDetail.basicParams.amountInTotal - feeAmount
+        ) {
+            revert IBKErrors.SwapTokenBalanceNotEnough();
         }
 
         (bool success, ) = bridgeDetail.aggregationParams.callTarget.call{
@@ -191,7 +234,10 @@ library BridgeAggregationFeature {
         _emitEvent(bridgeDetail, feeAmount);
     }
 
-    function _emitEvent(BridgeDetail calldata bridgeDetail, uint256 feeAmount) internal{
+    function _emitEvent(
+        BridgeDetail calldata bridgeDetail,
+        uint256 feeAmount
+    ) internal {
         emit BridgeAgg(
             bridgeDetail.basicParams.bridgeType,
             bridgeDetail.basicParams.fromTokenAddress,
