@@ -95,11 +95,7 @@ library BridgeAggregationFeature {
         );
 
         if (fromTokenIsETH) {
-            if (
-                msg.value <
-                bridgeDetail.basicParams.amountInTotal +
-                    bridgeDetail.basicParams.additionalFee
-            ) {
+            if (msg.value < bridgeDetail.basicParams.amountInTotal) {
                 revert IBKErrors.SwapEthBalanceNotEnough();
             }
         } else {
@@ -189,16 +185,6 @@ library BridgeAggregationFeature {
         uint256 _feeRate
     ) internal {
         IERC20 fromToken = IERC20(bridgeDetail.basicParams.fromTokenAddress);
-
-        uint256 balanceOfThis = fromToken.balanceOf(address(this));
-        uint256 balanceBefore = balanceOfThis -
-            bridgeDetail.basicParams.amountInTotal;
-        if (
-            balanceOfThis - balanceBefore <
-            bridgeDetail.basicParams.amountInTotal
-        ) {
-            revert IBKErrors.BurnToMuch();
-        }
 
         TransferHelper.approveMax(
             fromToken,
